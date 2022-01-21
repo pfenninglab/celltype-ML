@@ -75,6 +75,40 @@ optional arguments:
                         Maximum momentum
 ```
 
+When training many cell type models, it can be helpful to use shell and sbatch scripts to train the models in parallel. By iterating over the cell types in a shell script, jobs can be submitted to a GPU compute node in parallel. In the example below, assume FASTAs for cell types 1, 2, 3, 4, etc. are in the current working directory:
+
+```
+#!/bin/bash
+
+ls *.fa | awk '{split($0, a, "_"); print a[1]}' | sort | uniq | while read line; do
+  echo $line
+  sbatch run_cnn.sb $line
+done
+```
+
+In `run_cnn.sb`, the compute specifications and input variables to `keras_cnn.py` can be defined:
+
+```
+#!/bin/bash
+#SBATCH --partition=gpu
+#SBATCH --nodes=1                # node count
+#SBATCH --ntasks=1               # total number of tasks across all nodes
+#SBATCH --cpus-per-task=1        # cpu-cores per task (>1 if multi-threaded tasks)
+#SBATCH --mem=16G                 # total memory per node (4 GB per cpu-core is default)
+#SBATCH --gres=gpu:1             # number of gpus per node
+#SBATCH --job-name cnn
+#SBATCH --error=cnn-%J.err.txt
+#SBATCH --output=cnn-%J.out.txt
+
+NAME="${1}_b64e30.h5"
+PT="${1}_train_positive.fa"
+NT="${1}_train_negative.fa"
+PV="${1}_valid_positive.fa"
+NV="${1}_valid_negative.fa"
+
+python keras_cnn.py -b 64 -e 30 -n ${NAME} -pt ${PT} -nt ${NT} -pv ${PV} -nv ${NV}
+```
+
 ### CNN Hyperparameter Tuning
 
 The model performance and generalizability are especially sensitive to, but not limited to, the following hyperparameters:
