@@ -77,7 +77,7 @@ optional arguments:
 
 When training many cell type models, it can be helpful to use shell and sbatch scripts to train the models in parallel. By iterating over the cell types in a shell script, jobs can be submitted to a GPU compute node in parallel. In the example below, assume FASTAs for cell types 1, 2, 3, 4, etc. are in the current working directory:
 
-```
+```bash
 #!/bin/bash
 
 ls *.fa | awk '{split($0, a, "_"); print a[1]}' | sort | uniq | while read line; do
@@ -88,7 +88,7 @@ done
 
 In `run_cnn.sb`, the compute specifications and input variables to `keras_cnn.py` can be defined:
 
-```
+```bash
 #!/bin/bash
 #SBATCH --partition=gpu
 #SBATCH --nodes=1                # node count
